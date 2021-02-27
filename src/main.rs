@@ -20,14 +20,16 @@ fn main() {
         Err(why) => panic!("couldn't open {}: {}", display, why),
         Ok(file) => file,
     };
-    drawer::fuck();
 
-    let x =read_file("Chip8 Picture.ch8".to_string());
+    let mut my_drawer = drawer::Drawer::new();
 
-
-    let mut my_chip8 = chip8::Chip8::new(x);
+    my_drawer.draw();
+    my_drawer.clear();
  
-    
+    let x =read_file("Chip8 Picture.ch8".to_string());
+ 
+    let mut my_chip8 = chip8::Chip8::new(x);
+  
     let opcode = my_chip8.fetch(); 
     let instruction = my_chip8.decode(opcode); 
     println!("my inst: {}", instruction);
