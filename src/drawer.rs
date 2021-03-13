@@ -9,21 +9,16 @@ use std::{io, time::Duration};
 use std::thread; 
 
 pub struct Drawer{
-    canvas: Canvas<Window>,
-    sdl_context: Sdl,
-    test: i16,
-    event_pump: EventPump,
-    history: Vec<(i32,i32, Vec<Vec<char>>)> 
+    canvas: Canvas<Window>,  
 }
 
 impl Drawer{
 
-    pub fn new() -> Drawer {
-        let sdl_context = sdl2::init().unwrap();
+    pub fn new(sdl_context: &Sdl) -> Drawer { 
         let video_subsystem = sdl_context.video().unwrap();
      
           
-        let  event_pump = sdl_context.event_pump().unwrap();
+        // let  event_pump = sdl_context.event_pump().unwrap();
         let window = video_subsystem.window("rust-sdl2 demo", 640, 320)
             .position_centered()
             .build()
@@ -32,20 +27,13 @@ impl Drawer{
         let canvas = window.into_canvas().build().unwrap(); 
 
         return Drawer{
-            canvas,
-            sdl_context,
-            test: 32,
-            event_pump, 
-            history: Vec::new()
+            canvas,  
         }
         
     }
 
     pub fn clear(&mut self){ 
-        println!("Clearing!");
-        while !self.history.is_empty(){
-            self.history.pop();
-        }
+        println!("Clearing!"); 
         self.canvas.set_draw_color(Color::WHITE); 
         self.canvas.clear();
         self.canvas.present(); 
@@ -55,30 +43,26 @@ impl Drawer{
         self.canvas.set_draw_color(Color::BLACK); 
            
         let mut i = 0;
-        'running: loop {
-            i = (i + 1) % 255; 
-            for event in self.event_pump.poll_iter() {
-                match event {
-                    Event::Quit {..} |
-                    Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
-                        break 'running
-                    },
-                    _ => {}
-                }
-            }  
+        // 'running: loop {
+        //     i = (i + 1) % 255; 
+        //     for event in self.event_pump.poll_iter() {
+        //         match event {
+        //             Event::Quit {..} |
+        //             Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
+        //                 break 'running
+        //             },
+        //             _ => {}
+        //         }
+        //     }  
             
-            if i == 100{
-                break;
-            } 
-            ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 60));
-        }
+        //     if i == 100{
+        //         break;
+        //     } 
+        //     ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 60));
+        // }
     } 
-
-    pub fn save_history(&mut self, x:i32,y:i32, sprite: Vec<Vec<char>>){
-        self.history.push((x,y,sprite));
-
-    }
-    
+ 
+ 
     pub fn draw(&mut self, sprite: [[char; 64]; 32]){
         
         self.canvas.clear();
@@ -98,6 +82,24 @@ impl Drawer{
 
         self.canvas.present(); 
         
+        let mut i = 0;
+        // 'running: loop {
+        //     i = (i + 1) % 255; 
+        //     for event in self.event_pump.poll_iter() {
+        //         match event {
+        //             Event::Quit {..} |
+        //             Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
+        //                 break 'running
+        //             },
+        //             _ => {}
+        //         }
+        //     }  
+            
+        //     if i == 1{
+        //         break;
+        //     } 
+        //     ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 60));
+        // }
  
   
     }

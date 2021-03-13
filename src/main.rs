@@ -6,8 +6,11 @@ use std::time::Duration;
 use std::fs::File;
 use std::io::{self, BufRead};
 use std::path::Path;
-use std::io::prelude::*; 
+use std::io::prelude::*;
+
+use sdl2::{event::Event, keyboard::Keycode}; 
 mod drawer;
+mod keyboard;
 mod chip8;
 mod chip8_test;
 
@@ -25,24 +28,32 @@ fn main() {
         Ok(file) => file,
     };
  
-    let x =read_file("Chip8 Picture.ch8".to_string());
+    let x =read_file("IBM Logo.ch8".to_string());
 
-    
+    let sdl_context = sdl2::init().unwrap();
+     
+    // let mut event_pumcp = sdl_context.event_pump().unwrap();
     let mut my_chip8 = chip8::Chip8::new();
-    let mut drawer = drawer::Drawer::new();
+    let mut drawer = drawer::Drawer::new(&sdl_context);
+    let mut keyboard = keyboard::Keyboard::new(&sdl_context);
     my_chip8.load(&x); 
 
-    let mut zx = 0;
-    my_chip8.clear();
-    drawer.clear();
+    let mut zx:u16 = 0; 
 
+    // my_chip8.clear();
+    // drawer.clear();
+    
     while my_chip8.still_has_more_instructions() {
+        keyboard.poll_keyboard(); 
+        my_chip8.set_keyboard(keyboard.keys_pressed); 
         let opcode = my_chip8.fetch(); 
         let instruction = my_chip8.decode(opcode);  
         my_chip8.execute(instruction); 
         drawer.draw(my_chip8.vram); 
+        let mut i = 0; 
+        i = (i + 1) % 255;  
         zx += 1;
-        if zx == 500{
+        if zx == 1000{
             break;
         }
     }
