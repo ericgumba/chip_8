@@ -17,8 +17,7 @@ impl Drawer{
     pub fn new(sdl_context: &Sdl) -> Drawer { 
         let video_subsystem = sdl_context.video().unwrap();
      
-          
-        // let  event_pump = sdl_context.event_pump().unwrap();
+           
         let window = video_subsystem.window("rust-sdl2 demo", 640, 320)
             .position_centered()
             .build()
@@ -41,25 +40,7 @@ impl Drawer{
  
 
         self.canvas.set_draw_color(Color::BLACK); 
-           
-        let mut i = 0;
-        // 'running: loop {
-        //     i = (i + 1) % 255; 
-        //     for event in self.event_pump.poll_iter() {
-        //         match event {
-        //             Event::Quit {..} |
-        //             Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
-        //                 break 'running
-        //             },
-        //             _ => {}
-        //         }
-        //     }  
             
-        //     if i == 100{
-        //         break;
-        //     } 
-        //     ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 60));
-        // }
     } 
  
  
@@ -81,25 +62,7 @@ impl Drawer{
         }
 
         self.canvas.present(); 
-        
-        let mut i = 0;
-        // 'running: loop {
-        //     i = (i + 1) % 255; 
-        //     for event in self.event_pump.poll_iter() {
-        //         match event {
-        //             Event::Quit {..} |
-        //             Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
-        //                 break 'running
-        //             },
-        //             _ => {}
-        //         }
-        //     }  
-            
-        //     if i == 1{
-        //         break;
-        //     } 
-        //     ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 60));
-        // }
+         
  
   
     }

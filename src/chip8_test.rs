@@ -1097,28 +1097,28 @@ The interpreter copies the values of registers V0 through Vx into memory, starti
 
 */ 
 
-#[test]
-fn test_fx55(){
-    let mut my_chip = build_chip8(); 
-    my_chip.index_register = 520;
-    my_chip.regs[0x1] = 12;
-    my_chip.regs[0x5] = 13;
-    my_chip.regs[0x7] = 156;
-    my_chip.regs[0x8] = 156;
-    my_chip.regs[0x9] = 156;
-    my_chip.regs[0xA] = 156;
-    my_chip.regs[0xB] = 56;
-    my_chip.regs[0xC] = 15;
-    my_chip.regs[0xD] = 16;
-    my_chip.execute("FA55".to_string());
-    
-    assert_eq!(my_chip.ram[520], 0);
-    assert_eq!(my_chip.ram[521], 12);
-    assert_eq!(my_chip.ram[my_chip.index_register as usize + 0xA], 156);
-    assert_eq!(my_chip.ram[my_chip.index_register as usize + 0xB], 0);
-    assert_eq!(my_chip.ram[my_chip.index_register as usize + 0xD], 0);
+    #[test]
+    fn test_fx55(){
+        let mut my_chip = build_chip8(); 
+        my_chip.index_register = 520;
+        my_chip.regs[0x1] = 12;
+        my_chip.regs[0x5] = 13;
+        my_chip.regs[0x7] = 156;
+        my_chip.regs[0x8] = 156;
+        my_chip.regs[0x9] = 156;
+        my_chip.regs[0xA] = 156;
+        my_chip.regs[0xB] = 56;
+        my_chip.regs[0xC] = 15;
+        my_chip.regs[0xD] = 16;
+        my_chip.execute("FA55".to_string());
+        
+        assert_eq!(my_chip.ram[520], 0);
+        assert_eq!(my_chip.ram[521], 12);
+        assert_eq!(my_chip.ram[my_chip.index_register as usize + 0xA], 156);
+        assert_eq!(my_chip.ram[my_chip.index_register as usize + 0xB], 0);
+        assert_eq!(my_chip.ram[my_chip.index_register as usize + 0xD], 0);
 
-}
+    }
 
 /* 
 
@@ -1129,13 +1129,12 @@ The interpreter reads values from memory starting at location I into registers V
 
     */
 
-    #[test] // 2 3 5 7
+    #[test] 
     fn test_fx65(){
         let mut my_chip = build_chip8(); 
         my_chip.index_register = 512; 
         my_chip.ram[my_chip.index_register as usize + 0xA] = 251;
-        my_chip.execute("FA65".to_string());
-        
+        my_chip.execute("FA65".to_string()); 
         assert_eq!(my_chip.regs[0], 2);
         assert_eq!(my_chip.regs[1], 3);
         assert_eq!(my_chip.regs[2], 5);

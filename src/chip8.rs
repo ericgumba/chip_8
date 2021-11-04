@@ -46,6 +46,7 @@ pub struct Chip8{
     pub rom: Vec<u8>,
     pub stack: Vec<u32>,
     pub vram: [[char; 64]; 32],
+    pub vram_changed: bool,
     pub keyboard: [bool; 16],
     pub delay_timer: Timer,
     pub sound_timer: Timer,
@@ -124,6 +125,7 @@ pub fn convert_vx_value_into_keyboard_index_value(hex: String) -> usize {
                 rom: vec![],
                 font_locations:[0;16],
                 keyboard: [false; 16],
+                vram_changed: false,
                 delay_timer: Timer { val: 0 },
                 sound_timer: Timer { val: 0 },
             }
@@ -315,38 +317,46 @@ pub fn convert_vx_value_into_keyboard_index_value(hex: String) -> usize {
                 self.vram[i][j] = '0'
             }
         }
+        self.vram_changed = true;
     } 
 
     fn set_vx_register(&mut self, instruction: String){   
         
         let reduced_instruction = crop_str(&instruction, 1);  
-        
         let register_to_set = reduced_instruction.chars().nth(0).unwrap();
-        
         let register_to_set_dec_format = Chip8::convert_hex_to_u16(&register_to_set.to_string());
-        
         let further_reduced = crop_str(reduced_instruction, 1); 
-        let res = Chip8::convert_hex_to_u8(further_reduced);
+        let res = Chip8::convert_hex_to_u16(further_reduced);
         self.regs[register_to_set_dec_format as usize] = res as u8; 
+        
+        
+        
 
     }
-    fn add_to_vx_register(&mut self, instruction: String){  
-        println!("adding vx register"); 
+
+
+        // 7xkk - ADD Vx, byte
+        // Set Vx = Vx + kk.
+
+        // Adds the value kk to the value of register Vx, then stores the result in Vx.
+
+    fn add_to_vx_register(&mut self, instruction: String){   
         let reduced_instruction = crop_str(&instruction, 1);   
         let register_to_set = reduced_instruction.chars().nth(0).unwrap(); 
         let register_to_set_dec_format = Chip8::convert_hex_to_u16(&register_to_set.to_string()); 
         let further_reduced = crop_str(reduced_instruction, 1); 
-        let res = Chip8::convert_hex_to_u8(further_reduced);
-        println!("regist to set: {}, further reduced: {}, res to add: {}", register_to_set_dec_format, further_reduced, res);
-        self.regs[register_to_set_dec_format as usize] += res as u8 
+        let res = Chip8::convert_hex_to_u16(further_reduced);  
+        let real_res2 = self.regs[register_to_set_dec_format as usize] as u16;
+        let f = real_res2 + res;
+        self.regs[register_to_set_dec_format as usize] = f as u8;
     }
  
 
     // dxyn
     pub fn draw(& mut self, instruction: String){
-        
-        println!("DRAWING");
+        self.vram_changed = true;
         let reduced_instruction = crop_str(&instruction, 1);
+         
         let vx = Chip8::convert_hex_to_u8(&reduced_instruction.chars().nth(0).unwrap().to_string());
         let vy = Chip8::convert_hex_to_u8(&reduced_instruction.chars().nth(1).unwrap().to_string());
         let x_coord: usize = self.regs[vx as usize].into();
@@ -355,10 +365,10 @@ pub fn convert_vx_value_into_keyboard_index_value(hex: String) -> usize {
         let bytes_to_read = Chip8::convert_hex_to_u8(&reduced_instruction.chars().nth(2).unwrap().to_string());  
         let mut sprite_deleted = false;
         for i in 0..bytes_to_read{ 
-            let mut sprite_template = format!("{:b}",self.ram[ self.index_register as usize + i as usize ]); 
+            let mut sprite_template = format!("{:b}",self.ram[ self.index_register as usize + (i) as usize ]); 
             
             sprite_template = make_into_8_field(sprite_template); 
-            
+             
             for j in 0..sprite_template.len(){
                 if sprite_template.chars().nth(j).unwrap() == '1' {
                     let y = (y_coord+i as usize) % 32;
@@ -385,6 +395,7 @@ pub fn convert_vx_value_into_keyboard_index_value(hex: String) -> usize {
             self.regs[0xf] = 0;
         }
     } 
+    
 
     pub fn can_skip(&mut self, instruction: String, reg_value: u8) -> bool{
 
@@ -392,9 +403,10 @@ pub fn convert_vx_value_into_keyboard_index_value(hex: String) -> usize {
         let nn_str = crop_str(&instruction, 2);
         let nn = Chip8::convert_hex_to_u8(nn_str);
         if op_code == 3{
-            reg_value == nn.try_into().unwrap()  
+                return reg_value == nn.try_into().unwrap()  
+
         } else if op_code == 4 {
-            reg_value != nn.try_into().unwrap()  
+                return reg_value != nn.try_into().unwrap()  
         } else { 
             
             println!("ERROR OCCURRED!");
@@ -444,8 +456,7 @@ pub fn convert_vx_value_into_keyboard_index_value(hex: String) -> usize {
         let vx_key = Chip8::convert_hex_to_u8(&instruction.chars().nth(1).unwrap().to_string());
         let vy_key = Chip8::convert_hex_to_u8(&instruction.chars().nth(2).unwrap().to_string());
         let res: u16 = (self.regs[vx_key as usize] as u16+self.regs[vy_key as usize] as u16).into();
-
-        println!("here is sn {:b}", res);
+ 
         if res > 255 { 
             self.regs[0xF] = 1
         } else {
@@ -472,6 +483,7 @@ pub fn convert_vx_value_into_keyboard_index_value(hex: String) -> usize {
     }
     pub fn sub_vy_with_vx(&mut self, instruction: String){ 
 
+        println!("DEBUG CANDIDATE"); 
         let vx_key = Chip8::convert_hex_to_u8(&instruction.chars().nth(1).unwrap().to_string());
         let vy_key = Chip8::convert_hex_to_u8(&instruction.chars().nth(2).unwrap().to_string());
         let vx = self.regs[vx_key as usize];
@@ -503,7 +515,7 @@ pub fn convert_vx_value_into_keyboard_index_value(hex: String) -> usize {
         self.pc = self.stack.pop().unwrap() as usize;
     }
     pub fn subroutine(&mut self, instruction: String){  
-        self.stack.push(self.pc as u32); 
+        self.stack.push((self.pc) as u32); 
 
         let reduced_instructions = crop_str(&instruction, 1);
 
@@ -511,24 +523,25 @@ pub fn convert_vx_value_into_keyboard_index_value(hex: String) -> usize {
     }
     
     
-    pub fn skip_if_eq(&mut self, instruction: String){ 
+    pub fn skip_if_eq(&mut self, instruction: String){  
         let x_reg = Chip8::convert_hex_to_u16(&instruction.chars().nth(1).unwrap().to_string() ) as usize;
         let y_reg = Chip8::convert_hex_to_u16(&instruction.chars().nth(2).unwrap().to_string() ) as usize;
         
         self.pc = if self.regs[x_reg] == self.regs[y_reg] { self.pc + 2 } else { self.pc };
     }
-    
-    pub fn skip_if_neq(&mut self, instruction: String){ 
+    // 4xnn
+    pub fn skip_if_neq(&mut self, instruction: String){  
         let x_reg = Chip8::convert_hex_to_u16(&instruction.chars().nth(1).unwrap().to_string() ) as usize; 
-        let nn = Chip8::convert_hex_to_u8( crop_str(&instruction, 2) );
-        
-        self.pc = if self.regs[x_reg] == nn { self.pc } else{ self.pc+2 }
+        let nn = Chip8::convert_hex_to_u16( crop_str(&instruction, 2) );
+          
+            self.pc = if self.regs[x_reg] == nn as u8 { self.pc } else{ self.pc+2 } 
     }
     pub fn skip_if_vy_neq_vx(&mut self, instruction: String){ 
         let x_reg = Chip8::convert_hex_to_u16(&instruction.chars().nth(1).unwrap().to_string() ) as usize; 
         let y_reg = Chip8::convert_hex_to_u16(&instruction.chars().nth(2).unwrap().to_string() ) as usize;
-        
-        self.pc = if self.regs[x_reg] == self.regs[y_reg] { self.pc } else{ self.pc+2 }
+        println!("here {}", self.pc);
+        self.pc = if self.regs[x_reg] == self.regs[y_reg] { self.pc } else{ self.pc+2 };
+        println!("again {}", self.pc);
     }
     pub fn rand_and_nn(&mut self, instruction: String){  
         let x_reg = Chip8::convert_hex_to_u16(&instruction.chars().nth(1).unwrap().to_string() ) as usize; 
@@ -549,13 +562,15 @@ pub fn convert_vx_value_into_keyboard_index_value(hex: String) -> usize {
         let vx_index = Chip8::convert_hex_to_u8(&instruction.chars().nth(1).unwrap().to_string() );
         self.regs[vx_index as usize] = self.delay_timer.val as u8; 
     }
-    pub fn fx15(&mut self, instruction: String){  
+    pub fn fx15(&mut self, instruction: String){ 
+        // no 
         let vx_index = Chip8::convert_hex_to_u8(&instruction.chars().nth(1).unwrap().to_string() );
         
         self.delay_timer.val  = (self.regs[vx_index as usize] as u8).into() 
     }
     
     pub fn fx18(&mut self, instruction: String){  
+        // no
         let vx_index = Chip8::convert_hex_to_u8(&instruction.chars().nth(1).unwrap().to_string() );
         
         self.sound_timer.val  = (self.regs[vx_index as usize] as u8).into() 
@@ -568,6 +583,8 @@ pub fn convert_vx_value_into_keyboard_index_value(hex: String) -> usize {
     // All execution stops until a key is pressed, then the value of that key is stored in Vx.
     
     pub fn fx0a(&mut self, instruction: String){   
+        println!("helo");
+        // no
         let vx_index = Chip8::convert_hex_to_u8(&instruction.chars().nth(1).unwrap().to_string() );
         let mut key_is_pressed = false;
         for i in 0..self.keyboard.len(){ 
@@ -579,32 +596,41 @@ pub fn convert_vx_value_into_keyboard_index_value(hex: String) -> usize {
         }
         if !key_is_pressed {
             self.pc -= 2;
+            if self.sound_timer.val != 0 {
             self.sound_timer.val += 1;
-            self.delay_timer.val += 1;
-
         }
+        if self.delay_timer.val != 0 {
+            self.delay_timer.val += 1;
+        }
+        
     }
     
-    pub fn fx1e(&mut self, instruction: String){   
-        let vx_index = Chip8::convert_hex_to_u8(&instruction.chars().nth(1).unwrap().to_string() );
+    
+}
+// yes
+pub fn fx1e(&mut self, instruction: String){   
+    let vx_index = Chip8::convert_hex_to_u8(&instruction.chars().nth(1).unwrap().to_string() );
         self.index_register += self.regs[vx_index as usize] as u16;
+        self.regs[0x0f] = if self.index_register > 0x0F00 { 1 } else { 0 };
     }
+    // no
     pub fn fx29(&mut self, instruction: String){   
         let vx_index = Chip8::convert_hex_to_u8(&instruction.chars().nth(1).unwrap().to_string() );
         self.index_register = self.font_locations[ self.regs[vx_index as usize] as usize ] as u16;
 
     }
+    // no
     pub fn fx55(&mut self, instruction: String){   
         let vx_index = Chip8::convert_hex_to_u8(&instruction.chars().nth(1).unwrap().to_string() );  
-
+        
         for i in 0..vx_index+1{
             self.ram[self.index_register as usize + i as usize] = self.regs[i as usize];
         }
-
+        
     }
-
-
-/* 
+    
+    
+    /* 
 
 Fx65 - LD Vx, [I]
 Read registers V0 through Vx from memory starting at location I.
@@ -612,15 +638,15 @@ Read registers V0 through Vx from memory starting at location I.
 The interpreter reads values from memory starting at location I into registers V0 through Vx.
 
     */
-
+    // no
     pub fn fx65(&mut self, instruction: String){    
         let vx_index = Chip8::convert_hex_to_u8(&instruction.chars().nth(1).unwrap().to_string() );  
- 
+        
         for i in 0..vx_index+1 {
-                 
+            
             self.regs[i as usize] = self.ram[self.index_register as usize + i as usize];
         }
-
+    // no
     }
     pub fn fx33(&mut self, instruction: String){   
         let vx_index = Chip8::convert_hex_to_u8(&instruction.chars().nth(1).unwrap().to_string() );
@@ -644,17 +670,16 @@ The interpreter reads values from memory starting at location I into registers V
         if vx_string.len() == 1{
             let one = vx_string.chars().nth(0).unwrap() as u8 - 0x30; 
             self.ram[self.index_register as usize] = one; 
-
+            
         }
-
+        
     }
-
+    
     pub fn execute(&mut self, instruction: String){ 
- 
+        
         
         let generalized_instruction = Chip8::generalize_instruction(&mut instruction.to_string()); 
-        
-
+         
         // 00E0 (clear screen)
         // 1NNN (jump)
         // 6XNN (set register VX)
@@ -663,6 +688,8 @@ The interpreter reads values from memory starting at location I into registers V
         // 8xy1 - OR Vx, Vy
         // Set Vx = Vx OR Vy.
         // DXYN (display/draw) 
+        // println!("instruction?? {}", instruction);
+        // println!("FML {}", generalized_instruction);
 
 
         match generalized_instruction {

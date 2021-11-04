@@ -6,6 +6,7 @@ use sdl2::EventPump;
 pub(crate) struct Keyboard{
    pub keyboard: KeyboardUtil,
    pub event_pump: EventPump,
+   pub p: bool,
    pub keys_pressed: [bool; 16],
    pub quit: bool
 }
@@ -21,6 +22,7 @@ impl Keyboard{
         return Keyboard{  
             keyboard,
             event_pump,
+            p: true,
             keys_pressed: [false;16],
             quit: false
         }
@@ -42,12 +44,8 @@ impl Keyboard{
         }
     }
     pub fn poll_keyboard(&mut self){ 
-
-        // let prev_keys = std::collections::HashSet::new();
-         
-
-        
-            
+ 
+ 
         self.reset_keys();
         self.event_pump.poll_event();
     
@@ -55,12 +53,8 @@ impl Keyboard{
             .keyboard_state()
             .pressed_scancodes()
             .filter_map(Keycode::from_scancode)
-            .collect();
-        // println!("HERE ARE KEYS {:?}", keys);
+            .collect(); 
 
-        // Get the difference between the new and old sets.
-        // let new_keys = &keys - &prev_keys;
-        // let old_keys = &prev_keys - &keys;
         if keys.contains(&Keycode::Num1){ 
             self.keys_pressed[0] = true;
         };
@@ -109,7 +103,12 @@ impl Keyboard{
         if keys.contains(&Keycode::V){
             self.keys_pressed[15] = true;
         };
-
+        if keys.contains(&Keycode::P){
+            self.p = true;
+        } else {
+            self.p = false;
+        }
+ 
 
         if keys.contains(&Keycode::Num0){
             self.quit = true;
